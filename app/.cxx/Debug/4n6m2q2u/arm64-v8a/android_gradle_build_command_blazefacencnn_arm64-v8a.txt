@@ -1,0 +1,7 @@
+Executable : /home/chang/Android/Sdk/cmake/3.18.1/bin/ninja
+arguments : 
+-C
+/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/Debug/4n6m2q2u/arm64-v8a
+blazefacencnn
+jvmArgs : 
+
