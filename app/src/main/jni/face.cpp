@@ -980,7 +980,7 @@ int Face::detect(const cv::Mat& rgb, std::vector<Object>& objects,float prob_thr
         cv::invertAffineTransform(trans_mat, trans_mat_inv);
 
         landmark.detect(objects[i].trans_image, trans_mat_inv, objects[i].skeleton, objects[i].left_eyes,objects[i].right_eyes);
-        card_detect.detect(objects[i].trans_image, objects[i].card_objects, 0.4, 0.5);
+        card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, 0.4, 0.5);
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
     }
 
@@ -1185,6 +1185,32 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             float average_fa = get_average_10_val(area_history, face_area);
             sprintf(text, "FA=%.0f", average_fa);
             draw_text(rgb, text);
+
+            float max_score = -1;
+            int max_index = 0;
+            for (int b = 0; b <objects[0].card_objects.size(); b++) {
+                BoxInfo box_info = objects[0].card_objects[b];
+                if (box_info.score > max_score) {
+                    max_score = box_info.score;
+                    max_index = b;
+                }
+            }
+            if (max_score > 0) {
+                BoxInfo max_box = objects[0].card_objects[max_index];
+                cv::Point2f p1 = cv::Point2f(max_box.x1, max_box.y1);
+                cv::Point2f p2 = cv::Point2f(max_box.x2, max_box.y2);
+                cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 2);
+
+                p2 = cv::Point2f(max_box.x2, max_box.y1);
+                float credit_size_pixel = cv::norm(p1 - p2);
+                float credit_size = credit_size_pixel * realSizeRatio / 100;
+                static float credit_size_history[10] = {0.f};
+                float average_cs = get_average_10_val(credit_size_history, credit_size);
+                sprintf(text, "%.1f=%.1f", max_score * 100, average_cs);
+                draw_text(rgb, text);
+            }
+
+
         }
     }
 

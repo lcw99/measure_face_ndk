@@ -179,8 +179,15 @@ int CardDetect::load(AAssetManager* mgr, bool use_gpu)
     return 0;
 }
 
-int CardDetect::detect(const cv::Mat& rgb, std::vector<BoxInfo> &objects, float score_threshold, float nms_threshold)
+int CardDetect::detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, float score_threshold, float nms_threshold)
 {
+    int src_w = rgb.cols;
+    int src_h = rgb.rows;
+    int dst_w = input_size[1];
+    int dst_h = input_size[0];
+    float width_ratio = (float)src_w / (float)dst_w;
+    float height_ratio = (float)src_h / (float)dst_h;
+
     ncnn::Mat input, resized_input;
     preprocess(rgb, input);
     auto ex = card.create_extractor();
@@ -204,12 +211,24 @@ int CardDetect::detect(const cv::Mat& rgb, std::vector<BoxInfo> &objects, float 
 
     this->decode_infer(out, center_priors, score_threshold, results);
 
-    for (int i = 0; i < (int)results.size(); i++)
+    for (auto & result : results)
     {
-        this->nms(results[i], nms_threshold);
-
-        for (auto box : results[i])
+        nms(result, nms_threshold);
+        for (auto box : result)
         {
+            float x = box.x1 * width_ratio;
+            float y = box.y1 * height_ratio;
+            float xt = x * trans_mat.at<double>(0, 0) + y * trans_mat.at<double>(0, 1) + trans_mat.at<double>(0, 2);
+            float yt = x * trans_mat.at<double>(1, 0) + y * trans_mat.at<double>(1, 1) + trans_mat.at<double>(1, 2);
+            box.x1 = xt;
+            box.y1 = yt;
+
+            x = box.x2 * width_ratio;
+            y = box.y2 * height_ratio;
+            xt = x * trans_mat.at<double>(0, 0) + y * trans_mat.at<double>(0, 1) + trans_mat.at<double>(0, 2);
+            yt = x * trans_mat.at<double>(1, 0) + y * trans_mat.at<double>(1, 1) + trans_mat.at<double>(1, 2);
+            box.x2 = xt;
+            box.y2 = yt;
             objects.push_back(box);
         }
     }

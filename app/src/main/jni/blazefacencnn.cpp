@@ -74,7 +74,6 @@ void MyNdkCamera::on_image_render(cv::Mat& rgb) const {
         if (g_blazeface) {
             std::vector<Object> faceobjects;
             g_blazeface->detect(rgb, faceobjects);
-
             g_blazeface->draw(rgb, faceobjects);
         } else {
             draw_unsupported(rgb);

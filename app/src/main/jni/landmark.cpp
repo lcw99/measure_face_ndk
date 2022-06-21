@@ -332,7 +332,7 @@ int LandmarkDetect::load(AAssetManager* mgr, const char* modeltype, bool use_gpu
     return 0;
 }
 
-int LandmarkDetect::detect(const cv::Mat& rgb,const cv::Mat& trans_mat, std::vector<cv::Point2f> &landmarks,
+int LandmarkDetect::detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<cv::Point2f> &landmarks,
         std::vector<cv::Point2f>& left_eyes,std::vector<cv::Point2f>& right_eyes)
 {
     cv::Mat input = rgb.clone();
