@@ -567,7 +567,7 @@ static int draw_fps(cv::Mat& rgb)
     float avg_fps = get_average_10_val(val_history, fps);
 
     char text[32];
-    sprintf(text, "FPS=%.2f", avg_fps);
+    sprintf(text, "FPS=%.0f", avg_fps);
 
     current_y = 0;
     draw_text(rgb, text);
@@ -980,6 +980,8 @@ int Face::detect(const cv::Mat& rgb, std::vector<Object>& objects,float prob_thr
         cv::invertAffineTransform(trans_mat, trans_mat_inv);
 
         landmark.detect(objects[i].trans_image, trans_mat_inv, objects[i].skeleton, objects[i].left_eyes,objects[i].right_eyes);
+        card_detect.detect(objects[i].trans_image, objects[i].card_objects, 0.4, 0.5);
+        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
     }
 
     return 0;
@@ -1019,6 +1021,7 @@ int Face::load(AAssetManager* mgr, const char* modeltype, int _target_size, bool
     blazepalm_net.load_model(mgr, modelpath);
 
     landmark.load(mgr,"face_landmark_with_attention");
+    card_detect.load(mgr, use_gpu);
 
     target_size = _target_size;
 
@@ -1150,19 +1153,19 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             static float PD_history[10] = {0.f};
             float average_PD = get_average_10_val(PD_history, PD);
             char text[50];
-            sprintf(text, "PD=%.2f", average_PD);
+            sprintf(text, "PD=%.0f", average_PD);
             draw_text(rgb, text);
 
             static float vl_history[10] = {0.f};
             float vertical_length = (float)cv::norm(objects[i].skeleton[10] - objects[i].skeleton[152]) * realSizeRatio / 100;
             float average_vl = get_average_10_val(vl_history, vertical_length);
-            sprintf(text, "VL=%.2f", average_vl);
+            sprintf(text, "VL=%.0f", average_vl);
             draw_text(rgb, text);
 
             static float hl_history[10] = {0.f};
             float horizontal_length = (float)cv::norm(objects[i].skeleton[127] - objects[i].skeleton[356]) * realSizeRatio / 100;
             float average_hl = get_average_10_val(hl_history, horizontal_length);
-            sprintf(text, "HL=%.2f", average_hl);
+            sprintf(text, "HL=%.0f", average_hl);
             draw_text(rgb, text);
 
             static float ratio_history[10] = {0.f};
@@ -1180,7 +1183,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             static float area_history[10] = {0.f};
             float face_area = get_area(oval);
             float average_fa = get_average_10_val(area_history, face_area);
-            sprintf(text, "FA=%.2f", average_fa);
+            sprintf(text, "FA=%.0f", average_fa);
             draw_text(rgb, text);
         }
     }

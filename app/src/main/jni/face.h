@@ -18,6 +18,8 @@
 #include <opencv2/core/core.hpp>
 #include <net.h>
 #include "landmark.h"
+#include "carddetect.h"
+
 struct Object
 {
     cv::Rect_<float> rect;
@@ -34,6 +36,7 @@ struct Object
     std::vector<cv::Point2f> skeleton;
     std::vector<cv::Point2f> left_eyes;
     std::vector<cv::Point2f> right_eyes;
+    std::vector<BoxInfo> card_objects;
 };
 
 class Face
@@ -51,6 +54,7 @@ private:
 
     ncnn::Net blazepalm_net;
     LandmarkDetect landmark;
+    CardDetect card_detect;
     int target_size;
     float mean_vals[3];
     float norm_vals[3];

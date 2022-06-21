@@ -1,3 +1,2 @@
 ninja: Entering directory `/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/Debug/4n6m2q2u/arm64-v8a'
-[1/2] Building CXX object CMakeFiles/blazefacencnn.dir/ndkcamera.cpp.o
-[2/2] Linking CXX shared library /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/Debug/4n6m2q2u/obj/arm64-v8a/libblazefacencnn.so
+ninja: no work to do.

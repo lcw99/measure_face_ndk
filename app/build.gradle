@@ -4,7 +4,7 @@ android {
     compileSdkVersion 32
 
     defaultConfig {
-        applicationId "com.tencent.blazefacencnn"
+        applicationId "kr.semaphore.measureface"
         archivesBaseName = "$applicationId"
         targetSdkVersion 32
         minSdkVersion 24
@@ -12,7 +12,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            version "3.10.2"
+            version "3.23.2"
             path file('src/main/jni/CMakeLists.txt')
         }
     }

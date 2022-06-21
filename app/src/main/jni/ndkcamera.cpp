@@ -164,7 +164,6 @@ void onCaptureCompleted(void* context, ACameraCaptureSession* session, ACaptureR
 
 NdkCamera::NdkCamera()
 {
-    init_camera();
 }
 
 NdkCamera::~NdkCamera()
@@ -184,8 +183,7 @@ NdkCamera::~NdkCamera()
     }
 }
 
-std::string camera_id;
-void NdkCamera::init_camera()
+int NdkCamera::open(int _camera_facing)
 {
     camera_facing = 0;
     camera_orientation = 0;
@@ -200,10 +198,15 @@ void NdkCamera::init_camera()
     capture_session_output = 0;
     capture_session = 0;
 
+    __android_log_print(ANDROID_LOG_WARN, "NdkCamera", "open");
+
+    camera_facing = _camera_facing;
 
     camera_manager = ACameraManager_create();
 
     // find front camera
+    std::string camera_id;
+    std::vector<cv::Size2i> camera_resolutions;
     {
         ACameraIdList* camera_id_list = 0;
         ACameraManager_getCameraIdList(camera_manager, &camera_id_list);
@@ -276,13 +279,11 @@ void NdkCamera::init_camera()
         ACameraManager_deleteCameraIdList(camera_id_list);
     }
 
-    __android_log_print(ANDROID_LOG_WARN, "NdkCamera", "open %s %d", camera_id.c_str(), camera_orientation);
-
     // setup imagereader and its surface
     {
         cv::Size2i target_res = camera_resolutions[camera_resolutions.size() / 2];
         for (auto s : camera_resolutions) {
-            if (s.width > 800 && s.width < 1000) {
+            if (s.width == 1280) {
                 target_res = s;
                 break;
             }
@@ -301,13 +302,7 @@ void NdkCamera::init_camera()
 
         ANativeWindow_acquire(image_reader_surface);
     }
-}
 
-int NdkCamera::open(int _camera_facing)
-{
-    __android_log_print(ANDROID_LOG_WARN, "NdkCamera", "open");
-
-    camera_facing = _camera_facing;
 
     // open camera
     {
@@ -516,7 +511,6 @@ void NdkCameraWindow::on_image(const unsigned char* nv21, int nv21_width, int nv
 
             ASensorEventQueue_enableSensor(sensor_event_queue, accelerometer_sensor);
         }
-
         int id = ALooper_pollAll(0, 0, 0, 0);
         if (id == NDKCAMERAWINDOW_ID)
         {

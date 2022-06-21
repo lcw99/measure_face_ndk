@@ -37,6 +37,11 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "TRUE")
 endif()
 
+# Set default install directory permissions.
+if(NOT DEFINED CMAKE_OBJDUMP)
+  set(CMAKE_OBJDUMP "/home/chang/Android/Sdk/ndk/24.0.8215888/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-objdump")
+endif()
+
 if(CMAKE_INSTALL_COMPONENT)
   set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
 else()

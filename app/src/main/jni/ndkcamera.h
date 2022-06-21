@@ -43,7 +43,6 @@ public:
 public:
     int camera_facing;
     int camera_orientation;
-    std::vector<cv::Size2i> camera_resolutions;
 
 private:
     ACameraManager* camera_manager;

@@ -1,5 +1,4 @@
 {
-  "stringTable": {},
   "buildFiles": [
     "/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/CMakeLists.txt"
   ],
@@ -18,21 +17,20 @@
     "{LIST_OF_TARGETS_TO_BUILD}"
   ],
   "libraries": {
-    "blazefacencnn-Debug-x86": {
-      "buildCommandComponents": [
-        "/home/chang/Android/Sdk/cmake/3.18.1/bin/ninja",
-        "-C",
-        "/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/Debug/4n6m2q2u/x86",
-        "blazefacencnn"
-      ],
-      "buildType": "debug",
+    "blazefacencnn::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
       "abi": "x86",
       "artifactName": "blazefacencnn",
       "output": "/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/Debug/4n6m2q2u/obj/x86/libblazefacencnn.so",
       "runtimeFiles": []
     }
   },
-  "toolchains": {},
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/home/chang/Android/Sdk/ndk/24.0.8215888/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/home/chang/Android/Sdk/ndk/24.0.8215888/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
   "cFileExtensions": [],
   "cppFileExtensions": [
     "cpp"
