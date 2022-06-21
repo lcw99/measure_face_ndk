@@ -1,0 +1,23 @@
+                    Executable : /usr/bin/cmake
+arguments : 
+-H/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=24
+-DANDROID_PLATFORM=android-24
+-DANDROID_ABI=x86
+-DCMAKE_ANDROID_ARCH_ABI=x86
+-DANDROID_NDK=/home/chang/Android/Sdk/ndk/24.0.8215888
+-DCMAKE_ANDROID_NDK=/home/chang/Android/Sdk/ndk/24.0.8215888
+-DCMAKE_TOOLCHAIN_FILE=/home/chang/Android/Sdk/ndk/24.0.8215888/build/cmake/android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=/home/chang/Android/Sdk/cmake/3.18.1/bin/ninja
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/RelWithDebInfo/4f3z1qx2/obj/x86
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/RelWithDebInfo/4f3z1qx2/obj/x86
+-DCMAKE_BUILD_TYPE=RelWithDebInfo
+-B/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/RelWithDebInfo/4f3z1qx2/x86
+-GNinja
+jvmArgs : 
+
+
+                    Build command args: []
+                    Version: 2
