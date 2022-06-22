@@ -39,6 +39,7 @@ struct Object
     std::vector<cv::Point2f> left_eyes;
     std::vector<cv::Point2f> right_eyes;
     std::vector<BoxInfo> card_objects;
+    std::vector<cv::Point2f> card_rect;
 };
 
 class Face

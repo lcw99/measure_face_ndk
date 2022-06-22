@@ -40,10 +40,13 @@ class CardDetect
 {
 public:
     int load(AAssetManager* mgr, bool use_gpu = false);
-    int detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, float score_threshold, float nms_threshold, const cv::Mat& main_rgb);
+    int detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, std::vector<cv::Point2f>& rect_points, float score_threshold, float nms_threshold, const cv::Mat& main_rgb);
+
+    static cv::Point2f inv_transform(cv::Point_<float> src, float ratio_w, float ratio_h, cv::Mat trans_mat);
 
 private:
     void preprocess(const cv::Mat& image, ncnn::Mat& in);
+
     void decode_infer(ncnn::Mat& feats, std::vector<CenterPrior>& center_priors, float threshold, std::vector<std::vector<BoxInfo>>& results);
     BoxInfo disPred2Bbox(const float*& dfl_det, int label, float score, int x, int y, int stride);
     static void nms(std::vector<BoxInfo>& result, float nms_threshold);

@@ -182,20 +182,30 @@ int CardDetect::load(AAssetManager* mgr, bool use_gpu)
     return 0;
 }
 
-void refine_card(const cv::Mat& rgb, BoxInfo box, const cv::Mat& main_rgb)
+void refine_card(const cv::Mat& rgb, const BoxInfo boxInfo, const cv::Mat& main_rgb, std::vector<cv::Point2f>& rect_points2)
 {
+    BoxInfo box = boxInfo;
+    __android_log_print(ANDROID_LOG_INFO, "carddetect", "box1=%.f,%.f,%.f,%.f", box.x1, box.y1, box.x2, box.y2);
+
     int width = cv::abs(box.x2 - box.x1);
     int height = cv::abs(box.y2 - box.y1);
-    float inflate_w = width * 0.2;
-    float inflate_h = height * 0.2;
-//    float inflate_w = 0;
-//    float inflate_h = 0;
+    float inflate_w = width * 0.1;
+    float inflate_h = height * 0.1;
+    //inflate_w = 0;
+    //inflate_h = 0;
     box.x1 -= inflate_w; if (box.x1 < 0) box.x1 = 0;
     box.y1 -= inflate_h; if (box.y1 < 0) box.y1 = 0;
     box.x2 += inflate_w;
     box.y2 += inflate_h;
-    width = cv::abs(box.x2 - box.x1);
-    height = cv::abs(box.y2 - box.y1);
+    width = cv::abs(box.x2 - box.x1) - 1;
+    height = cv::abs(box.y2 - box.y1) - 1;
+    if (width <= 0 || height <= 0)
+        return;
+    if (box.x1 + width >= main_rgb.cols)
+        width = main_rgb.cols - box.x1 - 1;
+    if (box.y1 + height >= main_rgb.rows)
+        height = main_rgb.rows - box.y1 - 1;
+    __android_log_print(ANDROID_LOG_INFO, "carddetect", "box2=%.f,%.f,%.f,%.f", box.x1, box.y1, box.x2, box.y2);
     cv::Mat image_card = main_rgb(cv::Rect((int)box.x1, (int)box.y1, width, height));
     __android_log_print(ANDROID_LOG_INFO, "carddetect", "image_card=%d,%d", image_card.cols, image_card.rows);
     cv::Mat image_resized, image_gray, image;
@@ -206,9 +216,9 @@ void refine_card(const cv::Mat& rgb, BoxInfo box, const cv::Mat& main_rgb)
     __android_log_print(ANDROID_LOG_INFO, "carddetect", "image_gray=%d,%d", image_gray.cols, image_gray.rows);
 
     //image_card.copyTo(main_rgb(cv::Rect(0,0, width, height)));
-    cv::Mat temp_color;
-    cv::cvtColor(image, temp_color, cv::COLOR_GRAY2RGB);
-    temp_color.copyTo(main_rgb(cv::Rect(0,0, width, height)));
+//    cv::Mat temp_color;
+//    cv::cvtColor(image, temp_color, cv::COLOR_GRAY2RGB);
+//    temp_color.copyTo(main_rgb(cv::Rect(0,0, width, height)));
 
     cv::Mat clone = image.clone();
     clone = clone.reshape(1, (clone.cols * clone.rows));
@@ -240,12 +250,12 @@ void refine_card(const cv::Mat& rgb, BoxInfo box, const cv::Mat& main_rgb)
     cv::Canny(mask, canny, 50, 255, 3);
     std::vector<std::vector<cv::Point>> contours;
     std::vector<cv::Vec4i> hierarchy;
-    cv::findContours(mask, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(canny, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
     std::vector<std::vector<cv::Point>> cnts_large;
-    for (auto c : contours) {
-        cv::Rect box = cv::boundingRect(c);
-        if (box.width > mask.cols / 3 || box.height > mask.rows / 2)
+    for (const auto& c : contours) {
+        cv::Rect bbox = cv::boundingRect(c);
+        if (bbox.width > mask.cols / 3 || bbox.height > mask.rows / 2)
             cnts_large.push_back(c);
     }
 
@@ -253,20 +263,48 @@ void refine_card(const cv::Mat& rgb, BoxInfo box, const cv::Mat& main_rgb)
     for (auto c : cnts_large) {
         cnts_combined.insert(cnts_combined.end(), c.begin(), c.end());
     }
-    cv::convexHull(cnts_combined, hull_combined, false);
-    cv::RotatedRect rect = cv::minAreaRect(hull_combined);
-    cv::Point2f rect_points[4];
-    rect.points(rect_points);
-    for (auto p : rect_points) {
-        __android_log_print(ANDROID_LOG_INFO, "carddetect", "rect_points=%f,%f", p.x, p.y);
+    __android_log_print(ANDROID_LOG_INFO, "carddetect", "cnts_combined=%d", cnts_combined.size());
+
+    if (!cnts_combined.empty()) {
+        cv::convexHull(cnts_combined, hull_combined, false);
+        cv::RotatedRect rect = cv::minAreaRect(hull_combined);
+        cv::Point2f rect_points[4];
+        rect.points(rect_points);
+        int i = 0;
+        for (auto p: rect_points) {
+            p.x = p.x + box.x1;
+            p.y = p.y + box.y1;
+            __android_log_print(ANDROID_LOG_INFO, "carddetect", "rect_points=%f,%f", p.x, p.y);
+            rect_points2.push_back(p);
+        }
+        for (auto p: rect_points2) {
+            __android_log_print(ANDROID_LOG_INFO, "carddetect", "rect_points=%f,%f", p.x, p.y);
+        }
+//        std::vector<std::vector<cv::Point2f>> data(1);
+//        data[0].push_back(rect_points2[0]);
+//        data[0].push_back(rect_points2[1]);
+//        data[0].push_back(rect_points2[2]);
+//        data[0].push_back(rect_points2[3]);
+        //cv::drawContours(main_rgb, data, 0, cv::Scalar(0, 255, 255), 2);
+        //image_card.copyTo(main_rgb(cv::Rect(0,0, width, height)));
+
+        float card_size = cv::norm(rect_points[0] - rect_points[1]);
+        __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
+        card_size = cv::norm(rect_points[2] - rect_points[3]);
+        __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
     }
-    float card_size = cv::norm(rect_points[0] - rect_points[1]);
-    __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
-    card_size = cv::norm(rect_points[2] - rect_points[3]);
-    __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
 }
 
-int CardDetect::detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects,
+cv::Point2f CardDetect::inv_transform(cv::Point_<float> src, float ratio_w, float ratio_h, cv::Mat trans_mat)
+{
+    cv::Point2f dst;
+    float x = src.x * ratio_w;
+    float y = src.y * ratio_h;
+    dst.x = x * trans_mat.at<double>(0, 0) + y * trans_mat.at<double>(0, 1) + trans_mat.at<double>(0, 2);
+    dst.y = x * trans_mat.at<double>(1, 0) + y * trans_mat.at<double>(1, 1) + trans_mat.at<double>(1, 2);
+    return dst;
+}
+int CardDetect::detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, std::vector<cv::Point2f>& rect_points,
                        float score_threshold, float nms_threshold, const cv::Mat& main_rgb)
 {
     int src_w = rgb.cols;
@@ -304,26 +342,15 @@ int CardDetect::detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector
         nms(result, nms_threshold);
         for (auto box : result)
         {
-            BoxInfo box_src;
-            box_src.x1 = box.x1 * width_ratio;
-            box_src.y1 = box.y1 * height_ratio;
-            box_src.x2 = box.x2 * width_ratio;
-            box_src.y2 = box.y2 * height_ratio;
+            cv::Point2f pt = inv_transform(cv::Point2f(box.x1, box.y1), width_ratio, height_ratio, trans_mat);
+            box.x1 = pt.x;
+            box.y1 = pt.y;
 
-            float x = box_src.x1;
-            float y = box_src.y1;
-            float xt = x * trans_mat.at<double>(0, 0) + y * trans_mat.at<double>(0, 1) + trans_mat.at<double>(0, 2);
-            float yt = x * trans_mat.at<double>(1, 0) + y * trans_mat.at<double>(1, 1) + trans_mat.at<double>(1, 2);
-            box.x1 = xt;
-            box.y1 = yt;
-
-            x = box_src.x2;
-            y = box_src.y2;
-            xt = x * trans_mat.at<double>(0, 0) + y * trans_mat.at<double>(0, 1) + trans_mat.at<double>(0, 2);
-            yt = x * trans_mat.at<double>(1, 0) + y * trans_mat.at<double>(1, 1) + trans_mat.at<double>(1, 2);
-            box.x2 = xt;
-            box.y2 = yt;
-            refine_card(rgb, box, main_rgb);
+            pt = inv_transform(cv::Point2f(box.x2, box.y2), width_ratio, height_ratio, trans_mat);
+            box.x2 = pt.x;
+            box.y2 = pt.y;
+            __android_log_print(ANDROID_LOG_INFO, "carddetect", "box=%.f,%.f,%.f,%.f", box.x1, box.y1, box.x2, box.y2);
+            refine_card(rgb, box, main_rgb, rect_points);
 
             objects.push_back(box);
         }

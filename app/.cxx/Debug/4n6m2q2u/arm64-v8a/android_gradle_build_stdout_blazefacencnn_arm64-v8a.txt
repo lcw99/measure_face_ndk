@@ -1,8 +1,13 @@
 ninja: Entering directory `/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/Debug/4n6m2q2u/arm64-v8a'
-[1/2] Building CXX object CMakeFiles/blazefacencnn.dir/carddetect.cpp.o
-In file included from /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/carddetect.cpp:1:
+[1/2] Building CXX object CMakeFiles/blazefacencnn.dir/face.cpp.o
+In file included from /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/face.cpp:17:
+In file included from /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/face.h:21:
 /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/carddetect.h:18:1: warning: typedef requires a name [-Wmissing-declarations]
 typedef struct HeadInfo
 ^~~~~~~
-1 warning generated.
+/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/face.cpp:984:74: warning: format specifies type 'int' but the argument has type 'std::vector<BoxInfo>::size_type' (aka 'unsigned long') [-Wformat]
+        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
+                                                                    ~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                    %lu
+2 warnings generated.
 [2/2] Linking CXX shared library /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/Debug/4n6m2q2u/obj/arm64-v8a/libblazefacencnn.so

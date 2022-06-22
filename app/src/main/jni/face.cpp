@@ -980,7 +980,7 @@ int Face::detect(const cv::Mat& rgb, std::vector<Object>& objects,float prob_thr
         cv::invertAffineTransform(trans_mat, trans_mat_inv);
 
         landmark.detect(objects[i].trans_image, trans_mat_inv, objects[i].skeleton, objects[i].left_eyes,objects[i].right_eyes);
-        card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, 0.4, 0.5, rgb);
+        card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, objects[i].card_rect, 0.4, 0.5, rgb);
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
     }
 
@@ -1200,7 +1200,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
                 BoxInfo max_box = objects[0].card_objects[max_index];
                 cv::Point2f p1 = cv::Point2f(max_box.x1, max_box.y1);
                 cv::Point2f p2 = cv::Point2f(max_box.x2, max_box.y2);
-                cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 2);
+                cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 1);
 
                 p2 = cv::Point2f(max_box.x2, max_box.y1);
                 float credit_size_pixel = cv::norm(p1 - p2);
@@ -1211,6 +1211,13 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
                 draw_text(rgb, text);
             }
 
+            std::vector<cv::Point2f> card_rect = objects[0].card_rect;
+            if (card_rect.size() == 4) {
+                cv::line(rgb, card_rect[0], card_rect[1], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[1], card_rect[2], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[2], card_rect[3], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[3], card_rect[0], cv::Scalar(255,0,255),2);
+            }
 
         }
     }
