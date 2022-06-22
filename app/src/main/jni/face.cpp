@@ -1061,6 +1061,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
     {
         //objects[i].trans_image.copyTo(rgb(cv::Rect(0,0,TRANS_SIZE,TRANS_SIZE)));
 
+
         for(int j = 0; j < NUM_BASE_LANDMARK; j++)
             cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0,255,255),-1);
 /*
@@ -1147,12 +1148,77 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             float leftIrisSize = (float)cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK + 3]);
             float rightIrisSize = (float)cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 3]);
             float irisSize = (leftIrisSize + rightIrisSize) / 2;
-            float realSizeRatio = 1170 / irisSize;
+            float realSizeRatio_iris = 1170 / irisSize;
+
+            char text[50];
+
+            // card draw
+            float max_score = -1;
+            int max_index = 0;
+            for (int b = 0; b <objects[0].card_objects.size(); b++) {
+                BoxInfo box_info = objects[0].card_objects[b];
+                if (box_info.score > max_score) {
+                    max_score = box_info.score;
+                    max_index = b;
+                }
+            }
+            if (max_score > 0) {
+                BoxInfo max_box = objects[0].card_objects[max_index];
+                cv::Point2f p1 = cv::Point2f(max_box.x1, max_box.y1);
+                cv::Point2f p2 = cv::Point2f(max_box.x2, max_box.y2);
+                cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 1);
+
+/*
+                p2 = cv::Point2f(max_box.x2, max_box.y1);
+                float credit_size_pixel = cv::norm(p1 - p2);
+                float credit_size = credit_size_pixel * realSizeRatio_iris / 100;
+                static float credit_size_history[10] = {0.f};
+                float average_cs = get_average_10_val(credit_size_history, credit_size);
+                sprintf(text, "%.1f=%.1f", max_score * 100, average_cs);
+                draw_text(rgb, text);
+*/
+
+            }
+
+            std::vector<cv::Point2f> card_rect = objects[0].card_rect;
+            float realSizeRatio_cc = 0;
+            if (card_rect.size() == 4) {
+                cv::line(rgb, card_rect[0], card_rect[1], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[1], card_rect[2], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[2], card_rect[3], cv::Scalar(255,0,255),2);
+                cv::line(rgb, card_rect[3], card_rect[0], cv::Scalar(255,0,255),2);
+
+                float card_size1 = cv::norm(card_rect[0] - card_rect[1]);
+                float card_size2 = cv::norm(card_rect[2] - card_rect[3]);
+                if (card_size1 == card_size2) {
+                    __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size1);
+                    float card_size_real_by_iris = card_size1 * realSizeRatio_iris / 100;
+                    if (cv::abs(card_size_real_by_iris - 85.6) < 10) {
+                        float cc_ratio = 8560 / card_size1;
+                        static float realSizeRatio_cc_history[10] = {cc_ratio};
+                        realSizeRatio_cc = get_average_10_val(realSizeRatio_cc_history, cc_ratio);
+                    }
+                }
+            }
+
+            float realSizeRatio = 0;
+            static float PD_real_size = 0;
+            if (realSizeRatio_cc > 0) {
+                realSizeRatio = realSizeRatio_cc;
+                PD_real_size = (float)cv::norm(left_eye_center - right_eye_center) * realSizeRatio;
+            } else
+                realSizeRatio = realSizeRatio_iris;
+
+            if (PD_real_size > 0) {
+                float PD_pixel_size = (float)cv::norm(left_eye_center - right_eye_center);
+                realSizeRatio = PD_real_size / PD_pixel_size;
+                float realIrisSize = irisSize * realSizeRatio;
+                __android_log_print(ANDROID_LOG_INFO, "carddetect", "realIrisSize=%.2f", realIrisSize);
+            }
 
             float PD = (float)cv::norm(left_eye_center - right_eye_center) * realSizeRatio / 100;
             static float PD_history[10] = {0.f};
             float average_PD = get_average_10_val(PD_history, PD);
-            char text[50];
             sprintf(text, "PD=%.0f", average_PD);
             draw_text(rgb, text);
 
@@ -1186,38 +1252,6 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             sprintf(text, "FA=%.0f", average_fa);
             draw_text(rgb, text);
 
-            // card draw
-            float max_score = -1;
-            int max_index = 0;
-            for (int b = 0; b <objects[0].card_objects.size(); b++) {
-                BoxInfo box_info = objects[0].card_objects[b];
-                if (box_info.score > max_score) {
-                    max_score = box_info.score;
-                    max_index = b;
-                }
-            }
-            if (max_score > 0) {
-                BoxInfo max_box = objects[0].card_objects[max_index];
-                cv::Point2f p1 = cv::Point2f(max_box.x1, max_box.y1);
-                cv::Point2f p2 = cv::Point2f(max_box.x2, max_box.y2);
-                cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 1);
-
-                p2 = cv::Point2f(max_box.x2, max_box.y1);
-                float credit_size_pixel = cv::norm(p1 - p2);
-                float credit_size = credit_size_pixel * realSizeRatio / 100;
-                static float credit_size_history[10] = {0.f};
-                float average_cs = get_average_10_val(credit_size_history, credit_size);
-                sprintf(text, "%.1f=%.1f", max_score * 100, average_cs);
-                draw_text(rgb, text);
-            }
-
-            std::vector<cv::Point2f> card_rect = objects[0].card_rect;
-            if (card_rect.size() == 4) {
-                cv::line(rgb, card_rect[0], card_rect[1], cv::Scalar(255,0,255),2);
-                cv::line(rgb, card_rect[1], card_rect[2], cv::Scalar(255,0,255),2);
-                cv::line(rgb, card_rect[2], card_rect[3], cv::Scalar(255,0,255),2);
-                cv::line(rgb, card_rect[3], card_rect[0], cv::Scalar(255,0,255),2);
-            }
 
         }
     }

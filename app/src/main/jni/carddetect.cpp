@@ -288,10 +288,6 @@ void refine_card(const cv::Mat& rgb, const BoxInfo boxInfo, const cv::Mat& main_
         //cv::drawContours(main_rgb, data, 0, cv::Scalar(0, 255, 255), 2);
         //image_card.copyTo(main_rgb(cv::Rect(0,0, width, height)));
 
-        float card_size = cv::norm(rect_points[0] - rect_points[1]);
-        __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
-        card_size = cv::norm(rect_points[2] - rect_points[3]);
-        __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size);
     }
 }
 
