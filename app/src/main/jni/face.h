@@ -20,6 +20,8 @@
 #include "landmark.h"
 #include "carddetect.h"
 
+#define TRANS_SIZE 400
+
 struct Object
 {
     cv::Rect_<float> rect;

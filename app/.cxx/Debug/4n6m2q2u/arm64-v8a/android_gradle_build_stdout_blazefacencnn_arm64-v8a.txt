@@ -1,2 +1,8 @@
 ninja: Entering directory `/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/.cxx/Debug/4n6m2q2u/arm64-v8a'
-ninja: no work to do.
+[1/2] Building CXX object CMakeFiles/blazefacencnn.dir/carddetect.cpp.o
+In file included from /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/carddetect.cpp:1:
+/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/ncnn_Android_mediapipe_blazeface/app/src/main/jni/carddetect.h:18:1: warning: typedef requires a name [-Wmissing-declarations]
+typedef struct HeadInfo
+^~~~~~~
+1 warning generated.
+[2/2] Linking CXX shared library /home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/Debug/4n6m2q2u/obj/arm64-v8a/libblazefacencnn.so

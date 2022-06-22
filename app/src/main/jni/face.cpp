@@ -969,18 +969,18 @@ int Face::detect(const cv::Mat& rgb, std::vector<Object>& objects,float prob_thr
 
         cv::Point2f dstPts[4];
         dstPts[0] = cv::Point2f(0, 0);
-        dstPts[1] = cv::Point2f(192, 0);
-        dstPts[2] = cv::Point2f(192, 192);
-        dstPts[3] = cv::Point2f(0, 192);
+        dstPts[1] = cv::Point2f(TRANS_SIZE, 0);
+        dstPts[2] = cv::Point2f(TRANS_SIZE, TRANS_SIZE);
+        dstPts[3] = cv::Point2f(0, TRANS_SIZE);
 
         cv::Mat trans_mat = cv::getAffineTransform(srcPts, dstPts);
-        cv::warpAffine(rgb, objects[i].trans_image, trans_mat, cv::Size(192, 192), 1, 0);
+        cv::warpAffine(rgb, objects[i].trans_image, trans_mat, cv::Size(TRANS_SIZE, TRANS_SIZE), 1, 0);
 
         cv::Mat trans_mat_inv;
         cv::invertAffineTransform(trans_mat, trans_mat_inv);
 
         landmark.detect(objects[i].trans_image, trans_mat_inv, objects[i].skeleton, objects[i].left_eyes,objects[i].right_eyes);
-        card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, 0.4, 0.5);
+        card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, 0.4, 0.5, rgb);
         __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
     }
 
@@ -1059,7 +1059,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
     for (int i = 0; i < objects.size(); i++)
     {
-        objects[i].trans_image.copyTo(rgb(cv::Rect(0,0,192,192)));
+        //objects[i].trans_image.copyTo(rgb(cv::Rect(0,0,TRANS_SIZE,TRANS_SIZE)));
 
         for(int j = 0; j < NUM_BASE_LANDMARK; j++)
             cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0,255,255),-1);
@@ -1186,6 +1186,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             sprintf(text, "FA=%.0f", average_fa);
             draw_text(rgb, text);
 
+            // card draw
             float max_score = -1;
             int max_index = 0;
             for (int b = 0; b <objects[0].card_objects.size(); b++) {

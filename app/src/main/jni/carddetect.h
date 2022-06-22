@@ -40,7 +40,7 @@ class CardDetect
 {
 public:
     int load(AAssetManager* mgr, bool use_gpu = false);
-    int detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, float score_threshold, float nms_threshold);
+    int detect(const cv::Mat& rgb, const cv::Mat& trans_mat, std::vector<BoxInfo> &objects, float score_threshold, float nms_threshold, const cv::Mat& main_rgb);
 
 private:
     void preprocess(const cv::Mat& image, ncnn::Mat& in);

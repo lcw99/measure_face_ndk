@@ -112,6 +112,7 @@ public:
                std::vector<cv::Point2f>& left_eyes,std::vector<cv::Point2f>& right_eyes);
 
 private:
+    static cv::Point2f inv_transform(cv::Point_<float> src, float ratio_w, float ratio_h, cv::Mat trans_mat);
     TransformParam left_transform_param;
     TransformParam right_transform_param;
     TransformParam lip_transform_param;
