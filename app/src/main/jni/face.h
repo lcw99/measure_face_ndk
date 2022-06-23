@@ -20,7 +20,7 @@
 #include "landmark.h"
 #include "carddetect.h"
 
-#define TRANS_SIZE 400
+#define TRANS_SIZE 250
 
 struct Object
 {
