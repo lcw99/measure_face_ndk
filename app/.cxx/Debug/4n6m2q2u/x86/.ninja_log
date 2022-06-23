@@ -1,2 +1,13 @@
 # ninja log v5
 0	2	0	clean	94119e7044b9977b
+0	569	1655947390	CMakeFiles/blazefacencnn.dir/ndkcamera.cpp.o	e192a662568fcd3a
+0	595	1655947390	CMakeFiles/blazefacencnn.dir/blazefacencnn.cpp.o	9ae4cae0a7486ec
+0	672	1655947390	CMakeFiles/blazefacencnn.dir/landmark.cpp.o	1d01709e81ac8b19
+0	726	1655947390	CMakeFiles/blazefacencnn.dir/face.cpp.o	c26e25977392db4c
+1	818	1655947390	CMakeFiles/blazefacencnn.dir/carddetect.cpp.o	ed98ab10e32c8a62
+0	839	1655947473	CMakeFiles/blazefacencnn.dir/blazefacencnn.cpp.o	7f89b8a4f82babe8
+2	855	1655947473	CMakeFiles/blazefacencnn.dir/ndkcamera.cpp.o	561adc52da848ecd
+1	864	1655947473	CMakeFiles/blazefacencnn.dir/landmark.cpp.o	37601b81fd4a9a5e
+1	906	1655947473	CMakeFiles/blazefacencnn.dir/face.cpp.o	b10f65d06567523c
+2	1076	1655947473	CMakeFiles/blazefacencnn.dir/carddetect.cpp.o	f8cc0ff519e98acc
+1076	1573	1655947474	/home/chang/bighard/AndroidStudioProjects/ncnn_Android_blazeface/build/app/intermediates/cxx/Debug/4n6m2q2u/obj/x86/libblazefacencnn.so	76908fb1beb31bf0

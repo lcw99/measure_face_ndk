@@ -25,6 +25,10 @@
 
 #include <opencv2/core/core.hpp>
 
+static float sensor_size_mm;
+static float focal_length_mm;
+static float focal_length_pixels;
+
 class NdkCamera
 {
 public:
@@ -77,5 +81,6 @@ private:
     const ASensor* accelerometer_sensor;
     ANativeWindow* win;
 };
+
 
 #endif // NDKCAMERA_H

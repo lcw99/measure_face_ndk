@@ -271,6 +271,16 @@ int NdkCamera::open(int _camera_facing)
                 }
             }
 
+            entry = { 0 };
+            ACameraMetadata_getConstEntry(camera_metadata, ACAMERA_SENSOR_INFO_PHYSICAL_SIZE, &entry);
+            sensor_size_mm = entry.data.f[0];
+
+            entry = { 0 };
+            int r = ACameraMetadata_getConstEntry(camera_metadata, ACAMERA_LENS_INFO_AVAILABLE_FOCAL_LENGTHS, &entry);
+            if (r == ACAMERA_ERROR_METADATA_NOT_FOUND)
+                __android_log_print(ANDROID_LOG_INFO, "NdkCamera", "ACAMERA_LENS_INFO_AVAILABLE_FOCAL_LENGTHS not found");
+            focal_length_mm = entry.data.f[0];
+
             ACameraMetadata_free(camera_metadata);
 
             break;
@@ -291,6 +301,17 @@ int NdkCamera::open(int _camera_facing)
         //AImageReader_new(640, 480, AIMAGE_FORMAT_YUV_420_888, /*maxImages*/2, &image_reader);
         AImageReader_new(target_res.width, target_res.height, AIMAGE_FORMAT_YUV_420_888, /*maxImages*/2, &image_reader);
         __android_log_print(ANDROID_LOG_INFO, "NdkCamera", "set res(w,h)= %d %d", target_res.width, target_res.height);
+
+        int width = target_res.width;
+        int height = target_res.height;
+        if (target_res.height > target_res.width) {
+            width = target_res.height;
+            height = target_res.width;
+        }
+        float inv_aspect_ratio = (float)height / width;
+        float sensor_width = std::sqrt((sensor_size_mm * sensor_size_mm) /
+                                        (1.0 + inv_aspect_ratio * inv_aspect_ratio));
+        focal_length_pixels = (float)width * focal_length_mm / sensor_width;
 
         AImageReader_ImageListener listener;
         listener.context = this;

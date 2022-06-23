@@ -15,6 +15,7 @@
 #include <benchmark.h>
 
 #include "face.h"
+#include "ndkcamera.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -514,15 +515,22 @@ static void draw_text(cv::Mat& rgb, const char *text)
 {
     int y = current_y;
     int baseLine = 0;
-    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 1, 1, &baseLine);
+    double font_scale = (double)rgb.rows / 480. / 2.;
+
+    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, font_scale, 1, &baseLine);
 
     int x = rgb.cols - label_size.width;
 
-    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                  cv::Scalar(255, 255, 255), -1);
+//    cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
+//                  cv::Scalar(255, 255, 255), -1);
+
+    cv::Mat roi = rgb(cv::Rect(rgb.cols - label_size.width, y, label_size.width, label_size.height + baseLine));
+    cv::Mat color(roi.size(), CV_8UC3, cv::Scalar(255, 255, 255));
+    double alpha = 0.7;
+    cv::addWeighted(color, alpha, roi, 1.0 - alpha , 0.0, roi);
 
     cv::putText(rgb, text, cv::Point(x, y + label_size.height),
-                cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 0));
+                cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(0, 0, 0));
     current_y += label_size.height + baseLine;
 }
 
@@ -981,7 +989,7 @@ int Face::detect(const cv::Mat& rgb, std::vector<Object>& objects,float prob_thr
 
         landmark.detect(objects[i].trans_image, trans_mat_inv, objects[i].skeleton, objects[i].left_eyes,objects[i].right_eyes);
         card_detect.detect(objects[i].trans_image, trans_mat_inv, objects[i].card_objects, objects[i].card_rect, 0.4, 0.5, rgb);
-        __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
+        //__android_log_print(ANDROID_LOG_DEBUG, "ncnn", "card detect %d", objects[i].card_objects.size());
     }
 
     return 0;
@@ -1054,6 +1062,18 @@ static float get_area(std::vector<cv::Point2f>& poly) {
     return area;
 }
 
+inline float GetDepth(float x0, float y0, float x1, float y1) {
+    return std::sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+}
+
+float CalculateDepth(const cv::Point2f& center, float focal_length,
+                     float iris_size, float img_w, float img_h) {
+    std::pair<float, float> origin{img_w / 2.f, img_h / 2.f};
+    const auto y = GetDepth(origin.first, origin.second, center.x * img_w, center.y * img_h);
+    const auto x = std::sqrt(focal_length * focal_length + y * y);
+    const auto depth = 11.8 * x / iris_size;
+    return depth;
+}
 
 int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
@@ -1062,97 +1082,28 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
         //objects[i].trans_image.copyTo(rgb(cv::Rect(0,0,TRANS_SIZE,TRANS_SIZE)));
 
 
-        for(int j = 0; j < NUM_BASE_LANDMARK; j++)
-            cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0,255,255),-1);
-/*
-        for (int j = 0; j < 8; j++)
-        {
-            cv::line(rgb, objects[i].left_eyes[j], objects[i].left_eyes[j+1], cv::Scalar(0, 255, 0), 2);
-            cv::line(rgb, objects[i].right_eyes[j], objects[i].right_eyes[j+1], cv::Scalar(0, 255, 0), 2);
-        }
-        for (int j = 9; j < 15; j++)
-        {
-            cv::line(rgb, objects[i].left_eyes[j], objects[i].left_eyes[j+1], cv::Scalar(0, 255, 0), 2);
-            cv::line(rgb, objects[i].right_eyes[j], objects[i].right_eyes[j+1], cv::Scalar(0, 255, 0), 2);
-        }
-
-*/
-        for(int j = 0; j < 40; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_LIPS[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_LIPS[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
-        }
-        /*
-        for(int j = 0; j < 16; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_LEFT_EYE[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_LEFT_EYE[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
-        }
-        for(int j = 0; j < 16; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_RIGHT_EYE[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_RIGHT_EYE[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
-        }
-        */
-        for(int j = 0; j < 8; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_LEFT_EYEBROW[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_LEFT_EYEBROW[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
-        }
-        for(int j = 0; j < 8; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_RIGHT_EYEBROW[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_RIGHT_EYEBROW[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
-        }
-/*
-        for (int j = 0; j < 2556; j++)
-        {
-            cv::Point2f p1 = objects[i].skeleton[FACEMESH_TESSELATION[j][0]];
-            cv::Point2f p2 = objects[i].skeleton[FACEMESH_TESSELATION[j][1]];
-            cv::line(rgb, p1, p2, cv::Scalar(165, 190, 190), 1);
-        }
-*/
-        for (auto j : FACE_OVAL)
-        {
-            cv::Point2f p1 = objects[i].skeleton[j[0]];
-            cv::Point2f p2 = objects[i].skeleton[j[1]];
-            cv::line(rgb, p1, p2, cv::Scalar(165, 190, 190), 2);
-        }
-/*
-
-        cv::line(rgb, objects[i].pos[0], objects[i].pos[1], cv::Scalar(0, 0, 255), 2, 8, 0);
-        cv::line(rgb, objects[i].pos[1], objects[i].pos[2], cv::Scalar(0, 0, 255), 2, 8, 0);
-        cv::line(rgb, objects[i].pos[2], objects[i].pos[3], cv::Scalar(0, 0, 255), 2, 8, 0);
-        cv::line(rgb, objects[i].pos[3], objects[i].pos[0], cv::Scalar(0, 0, 255), 2, 8, 0);
-*/
-        for(auto j : CENTER_TRIANGLE)
-        {
-            cv::Point2f p1 = objects[i].skeleton[j[0]];
-            cv::Point2f p2 = objects[i].skeleton[j[1]];
-            cv::line(rgb, p1, p2, cv::Scalar(255,255,0),2);
-        }
-
-        for(int j = NUM_BASE_LANDMARK; j < NUM_BASE_LANDMARK + NUM_IRIS_LANDMARK * 2; j++)
-            cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0,255,255),-1);
-
         if (i == 0) {
             cv::Point2f left_eye_center = objects[i].skeleton[NUM_BASE_LANDMARK];
             cv::Point2f right_eye_center = objects[i].skeleton[NUM_BASE_LANDMARK + NUM_IRIS_LANDMARK];
             cv::line(rgb, left_eye_center, right_eye_center, cv::Scalar(255, 255, 0), 2);
 
-            float leftIrisSize = (float)cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK + 3]);
-            float rightIrisSize = (float)cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 3]);
-            float irisSize = (leftIrisSize + rightIrisSize) / 2;
-            float realSizeRatio_iris = 1170 / irisSize;
+            float hsize = cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK + 3]);
+            float vsize = cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK + 2] - objects[i].skeleton[NUM_BASE_LANDMARK + 4]);
+
+            float leftIrisSize = (float) (hsize + vsize) / 2.;
+            hsize = cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 1] - objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 3]);
+            vsize = cv::norm(objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 2] - objects[i].skeleton[NUM_BASE_LANDMARK  + NUM_IRIS_LANDMARK + 4]);
+            float rightIrisSize = (float) (hsize + vsize) / 2.;
+            float irisSize = (leftIrisSize + rightIrisSize) / 2.;
+            float realSizeRatio_iris = 1180 / irisSize;
+
+            const auto left_depth = CalculateDepth(left_eye_center, focal_length_pixels, leftIrisSize, rgb.cols, rgb.rows);
+            __android_log_print(ANDROID_LOG_INFO, "carddetect", "left_depth=%.2f", left_depth);
 
             char text[50];
 
             // card draw
+            bool card_detected = false;
             float max_score = -1;
             int max_index = 0;
             for (int b = 0; b <objects[0].card_objects.size(); b++) {
@@ -1167,6 +1118,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
                 cv::Point2f p1 = cv::Point2f(max_box.x1, max_box.y1);
                 cv::Point2f p2 = cv::Point2f(max_box.x2, max_box.y2);
                 cv::rectangle(rgb, p1, p2, cv::Scalar(255, 255, 200), 1);
+                card_detected = true;
 
 /*
                 p2 = cv::Point2f(max_box.x2, max_box.y1);
@@ -1182,6 +1134,8 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 
             std::vector<cv::Point2f> card_rect = objects[0].card_rect;
             float realSizeRatio_cc = 0;
+            static int card_detection_count = 0;
+            bool card_size_check_done = false;
             if (card_rect.size() == 4) {
                 cv::line(rgb, card_rect[0], card_rect[1], cv::Scalar(255,0,255),2);
                 cv::line(rgb, card_rect[1], card_rect[2], cv::Scalar(255,0,255),2);
@@ -1191,21 +1145,29 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
                 float card_size1 = cv::norm(card_rect[0] - card_rect[1]);
                 float card_size2 = cv::norm(card_rect[2] - card_rect[3]);
                 if (card_size1 == card_size2) {
-                    __android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size1);
+                    //__android_log_print(ANDROID_LOG_INFO, "carddetect", "card_size=%f", card_size1);
                     float card_size_real_by_iris = card_size1 * realSizeRatio_iris / 100;
-                    if (cv::abs(card_size_real_by_iris - 85.6) < 10) {
+                    if (cv::abs(card_size_real_by_iris - 85.6) < 5) {
                         float cc_ratio = 8560 / card_size1;
                         static float realSizeRatio_cc_history[10] = {cc_ratio};
                         realSizeRatio_cc = get_average_10_val(realSizeRatio_cc_history, cc_ratio);
+                        card_detection_count++;
+                        if (card_detection_count > 10) {
+                            card_size_check_done = true;
+                            card_detection_count = 0;
+                        }
                     }
                 }
             }
+            sprintf(text, "CARD=%d", card_detection_count);
+            draw_text(rgb, text);
 
             float realSizeRatio = 0;
             static float PD_real_size = 0;
-            if (realSizeRatio_cc > 0) {
+            if (card_size_check_done) {
                 realSizeRatio = realSizeRatio_cc;
                 PD_real_size = (float)cv::norm(left_eye_center - right_eye_center) * realSizeRatio;
+                card_size_check_done = false;
             } else
                 realSizeRatio = realSizeRatio_iris;
 
@@ -1213,7 +1175,7 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
                 float PD_pixel_size = (float)cv::norm(left_eye_center - right_eye_center);
                 realSizeRatio = PD_real_size / PD_pixel_size;
                 float realIrisSize = irisSize * realSizeRatio;
-                __android_log_print(ANDROID_LOG_INFO, "carddetect", "realIrisSize=%.2f", realIrisSize);
+                //__android_log_print(ANDROID_LOG_INFO, "carddetect", "realIrisSize=%.2f", realIrisSize);
             }
 
             float PD = (float)cv::norm(left_eye_center - right_eye_center) * realSizeRatio / 100;
@@ -1240,17 +1202,93 @@ int Face::draw(cv::Mat& rgb, const std::vector<Object>& objects)
             sprintf(text, "FR=%.2f", average_fr);
             draw_text(rgb, text);
 
-            std::vector<cv::Point2f> oval;
-            for (auto j : FACE_OVAL)
-            {
-                cv::Point2f p1 = objects[i].skeleton[j[0]];
-                oval.push_back(p1 * realSizeRatio / 100);
+            if (!card_detected) {
+                for (int j = 0; j < NUM_BASE_LANDMARK; j++)
+                    cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0, 255, 255), -1);
+/*
+        for (int j = 0; j < 8; j++)
+        {
+            cv::line(rgb, objects[i].left_eyes[j], objects[i].left_eyes[j+1], cv::Scalar(0, 255, 0), 2);
+            cv::line(rgb, objects[i].right_eyes[j], objects[i].right_eyes[j+1], cv::Scalar(0, 255, 0), 2);
+        }
+        for (int j = 9; j < 15; j++)
+        {
+            cv::line(rgb, objects[i].left_eyes[j], objects[i].left_eyes[j+1], cv::Scalar(0, 255, 0), 2);
+            cv::line(rgb, objects[i].right_eyes[j], objects[i].right_eyes[j+1], cv::Scalar(0, 255, 0), 2);
+        }
+
+*/
+                for (int j = 0; j < 40; j++) {
+                    cv::Point2f p1 = objects[i].skeleton[FACEMESH_LIPS[j][0]];
+                    cv::Point2f p2 = objects[i].skeleton[FACEMESH_LIPS[j][1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255, 0, 0), 2);
+                }
+                /*
+                for(int j = 0; j < 16; j++)
+                {
+                    cv::Point2f p1 = objects[i].skeleton[FACEMESH_LEFT_EYE[j][0]];
+                    cv::Point2f p2 = objects[i].skeleton[FACEMESH_LEFT_EYE[j][1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
+                }
+                for(int j = 0; j < 16; j++)
+                {
+                    cv::Point2f p1 = objects[i].skeleton[FACEMESH_RIGHT_EYE[j][0]];
+                    cv::Point2f p2 = objects[i].skeleton[FACEMESH_RIGHT_EYE[j][1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255,0,0),2);
+                }
+                */
+                for (int j = 0; j < 8; j++) {
+                    cv::Point2f p1 = objects[i].skeleton[FACEMESH_LEFT_EYEBROW[j][0]];
+                    cv::Point2f p2 = objects[i].skeleton[FACEMESH_LEFT_EYEBROW[j][1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255, 0, 0), 2);
+                }
+                for (int j = 0; j < 8; j++) {
+                    cv::Point2f p1 = objects[i].skeleton[FACEMESH_RIGHT_EYEBROW[j][0]];
+                    cv::Point2f p2 = objects[i].skeleton[FACEMESH_RIGHT_EYEBROW[j][1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255, 0, 0), 2);
+                }
+/*
+        for (int j = 0; j < 2556; j++)
+        {
+            cv::Point2f p1 = objects[i].skeleton[FACEMESH_TESSELATION[j][0]];
+            cv::Point2f p2 = objects[i].skeleton[FACEMESH_TESSELATION[j][1]];
+            cv::line(rgb, p1, p2, cv::Scalar(165, 190, 190), 1);
+        }
+*/
+                for (auto j: FACE_OVAL) {
+                    cv::Point2f p1 = objects[i].skeleton[j[0]];
+                    cv::Point2f p2 = objects[i].skeleton[j[1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(165, 190, 190), 2);
+                }
+/*
+
+        cv::line(rgb, objects[i].pos[0], objects[i].pos[1], cv::Scalar(0, 0, 255), 2, 8, 0);
+        cv::line(rgb, objects[i].pos[1], objects[i].pos[2], cv::Scalar(0, 0, 255), 2, 8, 0);
+        cv::line(rgb, objects[i].pos[2], objects[i].pos[3], cv::Scalar(0, 0, 255), 2, 8, 0);
+        cv::line(rgb, objects[i].pos[3], objects[i].pos[0], cv::Scalar(0, 0, 255), 2, 8, 0);
+*/
+                for (auto j: CENTER_TRIANGLE) {
+                    cv::Point2f p1 = objects[i].skeleton[j[0]];
+                    cv::Point2f p2 = objects[i].skeleton[j[1]];
+                    cv::line(rgb, p1, p2, cv::Scalar(255, 255, 0), 2);
+                }
+
+                for (int j = NUM_BASE_LANDMARK; j < NUM_BASE_LANDMARK + NUM_IRIS_LANDMARK * 2; j++)
+                    cv::circle(rgb, objects[i].skeleton[j], 1, cv::Scalar(0, 255, 255), -1);
+
+
+                std::vector<cv::Point2f> oval;
+                for (auto j: FACE_OVAL) {
+                    cv::Point2f p1 = objects[i].skeleton[j[0]];
+                    oval.push_back(p1 * realSizeRatio / 100);
+                }
+                static float area_history[10] = {0.f};
+                float face_area = get_area(oval);
+                float average_fa = get_average_10_val(area_history, face_area);
+                sprintf(text, "FA=%.0f", average_fa);
+                draw_text(rgb, text);
+
             }
-            static float area_history[10] = {0.f};
-            float face_area = get_area(oval);
-            float average_fa = get_average_10_val(area_history, face_area);
-            sprintf(text, "FA=%.0f", average_fa);
-            draw_text(rgb, text);
 
 
         }
